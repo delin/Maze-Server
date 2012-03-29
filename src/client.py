@@ -20,8 +20,9 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 
-import json, socket, numpy, random, math, time, operator
+import json, socket, numpy, random, math, time, operator, curses
 from heapq import heappush, heappop # for priority queue
+from os import system
 
 class node:
 	xPos = 0 # x position
@@ -214,7 +215,7 @@ class clproto:
 
 	def proto_close(self):
 		self.srv.srv_disconnect()
-		print "Disconnected"
+		print "\n\n\nDisconnected"
 
 	def auth(self):
 		msg = self.srv.msg_recv()
@@ -228,7 +229,7 @@ class clproto:
 		if msg['status'] == 'ok':
 			print "[sys] Auth Success."
 		else:
-			print "Error:", msg['message']
+			print "\n\n\nError:", msg['message']
 			return False
 
 		msg = self.srv.msg_recv()
@@ -256,6 +257,27 @@ class clproto:
 		to_st = 0
 
 		my_path = []
+
+		screen = curses.initscr()
+
+		curses.start_color()
+		curses.use_default_colors()
+
+		color_BLACK = 0
+		color_WHITE = 0
+		color_CIAN = 1
+		color_YELLOW = 2
+		color_BLUE = 3
+		color_GRAY = 4
+		color_RED = 5
+
+		curses.init_pair(color_BLACK, 0, -1)
+		curses.init_pair(color_WHITE, -1, -1)
+		curses.init_pair(color_CIAN, 6, -1)
+		curses.init_pair(color_YELLOW, 3, -1)
+		curses.init_pair(color_RED, 1, -1)
+		curses.init_pair(color_BLUE, 4, -1)
+		curses.init_pair(color_GRAY, 7, -1)
 
 		for i in xrange(self.timelimit + 1):
 			msg = self.srv.msg_recv()
@@ -366,8 +388,8 @@ class clproto:
 				to = s[random.randint(0, 3)][2]
 
 			my_path.append([self.bot_y, self.bot_x])
-			print "Turn #", msg['turn_no']
-			print "Move to", to
+			#~ print "Turn #", msg['turn_no']
+			#~ print "Move to", to
 
 			self.srv.msg_send('{"command": "' + to + '"}\n')
 
@@ -386,70 +408,55 @@ class clproto:
 					elif self.world[jy][jx] == -1:
 						self.world[jy][jx] = 12
 
-			print 'Generated in', time.time() - turn_time
-#~
-			todisp = bcolors.BG
+			screen.clear()
+			screen.addstr(1, 1, 'Generated in: ' + str(time.time() - turn_time), curses.color_pair(color_WHITE))
+			screen.addstr(2, 1, 'Turn:         ' + str(msg['turn_no']), curses.color_pair(color_WHITE))
+			screen.addstr(3, 1, 'Move to:      ' + to, curses.color_pair(color_WHITE))
+
+
 			for jx in xrange(self.world_x):
 				for jy in xrange(self.world_y):
 					if jx == self.ex and jy == self.ey:
-						todisp = todisp, bcolors.EXIT, "$", bcolors.ENDC,
+						screen.addstr(jx + 5, jy + 5, "$", curses.color_pair(color_YELLOW))
 					elif jx == self.bot_x and jy == self.bot_y:
-						todisp = todisp, bcolors.BOT, "☃", bcolors.ENDC,
+						screen.addstr(jx + 5, jy + 5, "@", curses.color_pair(color_RED))
 					elif self.world[jx][jy] == 1:
-						todisp = todisp, bcolors.BLOCK, "☰", bcolors.ENDC,
+						screen.addstr(jx + 5, jy + 5, "#", curses.color_pair(color_BLUE))
 					elif self.world[jx][jy] == 0:
-						todisp = todisp, bcolors.SEE, " ", bcolors.ENDC,
+						screen.addstr(jx + 5, jy + 5, " ", curses.color_pair(color_BLACK))
 					elif self.world[jx][jy] >= 10:
-						todisp = todisp, bcolors.SEE, "¤", bcolors.ENDC,
+						screen.addstr(jx + 5, jy + 5, ".", curses.color_pair(color_CIAN))
 					else:
-						todisp = todisp, bcolors.NULL, "?", bcolors.ENDC,
-#~ #~
-				todisp = todisp, '\n'
-			todisp = todisp, bcolors.END
+						screen.addstr(jx + 5, jy + 5, "?", curses.color_pair(color_GRAY))
 
-			print todisp
+				screen.addstr(jx + 5, 0, str(jx) + ":", curses.color_pair(color_WHITE))
 
+			screen.refresh()
 
-			#~ print bcolors.BG
+			#~ todisp = bcolors.BG
 			#~ for jx in xrange(self.world_x):
 				#~ for jy in xrange(self.world_y):
 					#~ if jx == self.ex and jy == self.ey:
-						#~ print bcolors.EXIT +"$" + bcolors.ENDC,
+						#~ todisp += bcolors.EXIT + "$" + bcolors.ENDC
 					#~ elif jx == self.bot_x and jy == self.bot_y:
-						#~ print bcolors.BOT + "☃" + bcolors.ENDC,
+						#~ todisp += bcolors.BOT + "@" + bcolors.ENDC
 					#~ elif self.world[jx][jy] == 1:
-						#~ print bcolors.BLOCK + "☰" + bcolors.ENDC,
+						#~ todisp += bcolors.BLOCK + "#" + bcolors.ENDC
 					#~ elif self.world[jx][jy] == 0:
-						#~ print bcolors.SEE + " " + bcolors.ENDC,
+						#~ todisp += bcolors.SEE + " " + bcolors.ENDC
 					#~ elif self.world[jx][jy] >= 10:
-						#~ print bcolors.SEE + "¤" + bcolors.ENDC,
+						#~ todisp += bcolors.SEE + "¤" + bcolors.ENDC
 					#~ else:
-						#~ print bcolors.NULL + "?" + bcolors.ENDC,
+						#~ todisp += bcolors.NULL + "?" + bcolors.ENDC
+					#~ todisp += ' '
+				#~ todisp += '\n'
+			#~ todisp = todisp + bcolors.END
 #~
-				#~ print ''
-			#~ print bcolors.END
+			#~ print todisp
 
 			if self.bot_x == self.ex and self.bot_y == self.ey:
-				#~ print bcolors.BG
-				#~ for jx in xrange(self.world_x):
-					#~ for jy in xrange(self.world_y):
-						#~ if jx == self.ex and jy == self.ey:
-							#~ print bcolors.EXIT +"$" + bcolors.ENDC,
-						#~ elif jx == self.bot_x and jy == self.bot_y:
-							#~ print bcolors.BOT + "☃" + bcolors.ENDC,
-						#~ elif self.world[jx][jy] == 1:
-							#~ print bcolors.BLOCK + "☰" + bcolors.ENDC,
-						#~ elif self.world[jx][jy] == 0:
-							#~ print bcolors.SEE + " " + bcolors.ENDC,
-						#~ elif self.world[jx][jy] >= 10:
-							#~ print bcolors.SEE + "¤" + bcolors.ENDC,
-						#~ else:
-							#~ print bcolors.NULL + "?" + bcolors.ENDC,
-	#~
-					#~ print ''
-				#~ print bcolors.END
-
-				print "FINISHED in", msg['turn_no'], "^_^"
+				curses.nocbreak(); screen.keypad(0); curses.echo()
+				print "\n\n\nFINISHED in", msg['turn_no'], "^_^"
 				return 0
 
 			for jx in xrange(self.world_y):
@@ -461,7 +468,8 @@ class clproto:
 					elif self.world[jy][jx] == 12:
 						self.world[jy][jx] = -1
 
-		print "\n;-("
+		curses.nocbreak(); screen.keypad(0); curses.echo()
+		print "\n\n\n;-("
 
 def main():
 	print "Starting.."
@@ -471,7 +479,7 @@ def main():
 	if srv.auth() == True:
 		srv.engine()
 
-	print 'Runtime:', time.time() - round_time
+	print '\n\n\nRuntime:', time.time() - round_time
 
 	srv.proto_close()
 
