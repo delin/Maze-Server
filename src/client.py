@@ -210,8 +210,7 @@ class bcolors:
 class clproto:
 	def __init__(self):
 		self.srv = clserver()
-		#~ self.srv.srv_connect("cloudcontest.ru", 8000)
-		self.srv.srv_connect("192.168.1.20", 8000)
+		self.srv.srv_connect("127.0.0.1", 12388)
 
 	def proto_close(self):
 		self.srv.srv_disconnect()

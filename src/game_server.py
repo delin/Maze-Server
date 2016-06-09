@@ -187,7 +187,7 @@ class path_find:
 class server_handler:
 	def __init__ (self):
 		self.host = ''
-		self.port = 8000
+		self.port = 12388
 		self.backlog = 16
 		self.size = 1024
 		self.server = None
@@ -199,17 +199,17 @@ class server_handler:
 			self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			self.server.bind((self.host, self.port))
 			self.server.listen(self.backlog)
-		except socket.error, (value,message):
+		except socket.error as message:
 			if self.server:
 				self.server.close()
-			print "Could not open socket: " + message
+			print("Could not open socket: " + message)
 			sys.exit(1)
 
 	def run (self):
 		self.open_socket()
 		input = [self.server, sys.stdin]
 
-		print "Server started."
+		print("Server started.")
 		running = True
 		while running:
 			inputready, outputready, exceptready = select.select(input, [], [])
@@ -219,7 +219,7 @@ class server_handler:
 					c = client_handler(self.server.accept())			# handle the server socket
 					c.start()
 					self.threads.append(c)
-					print "Accept new connection"
+					print("Accept new connection")
 				elif s == sys.stdin:
 					junk = sys.stdin.readline()							# handle standard input
 					running = False
@@ -310,8 +310,8 @@ class client_handler(threading.Thread):
 
 				ok = False
 
-		print "lenth of pass: ", len(route)
-		print bcolors.BG
+		print("lenth of pass: ", len(route))
+		print(bcolors.BG)
 		for jx in xrange(map_width):
 			for jy in xrange(map_height):
 				if grid[jx][jy] == 11:
@@ -328,7 +328,7 @@ class client_handler(threading.Thread):
 					print bcolors.NULL + "?" + bcolors.ENDC,
 
 			print ''
-		print bcolors.END
+		print(bcolors.END)
 
 		s = {'d': [0, 1], 'r': [1, 0], 'u': [0, -1], 'l': [-1, 0]}
 		bot_position = [bot_x, bot_y]
@@ -400,7 +400,7 @@ class client_handler(threading.Thread):
 
 			turn_no += 1
 
-		print "timelimit"
+		print("timelimit")
 
 		return True
 
